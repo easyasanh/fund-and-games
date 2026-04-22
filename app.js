@@ -696,7 +696,7 @@ function renderTabs() {
   document.querySelectorAll(".tab").forEach((tab) => {
     tab.classList.toggle("is-active", tab.dataset.category === state.selectedCategory);
   });
-  elements.buyModeToggle.textContent = `Mode: ${buyModeLabels[state.buyMode] ?? "1x"}`;
+  elements.buyModeToggle.textContent = buyModeLabels[state.buyMode] ?? "1x";
 }
 
 function renderUpgrades() {

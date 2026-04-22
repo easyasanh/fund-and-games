@@ -469,9 +469,8 @@ h2 {
   flex-wrap: wrap;
   gap: 0;
   overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.36);
+  border-bottom: 1px solid var(--line);
+  background: transparent;
 }
 
 .upgrade-controls {
@@ -484,7 +483,6 @@ h2 {
   min-height: 36px;
   padding: 0 10px;
   border: 0;
-  border-right: 1px solid var(--line);
   border-radius: 0;
   background: transparent;
   cursor: pointer;
@@ -492,10 +490,20 @@ h2 {
   font-weight: 900;
 }
 
-.tab.is-active,
+.tab {
+  border-bottom: 3px solid transparent;
+}
+
+.tab.is-active {
+  color: var(--ink);
+  border-bottom-color: var(--green-strong);
+}
+
 .buy-mode-toggle {
+  min-width: 48px;
   color: #fff;
   background: var(--ink);
+  border-radius: 8px 8px 0 0;
 }
 
 .upgrade-list {
