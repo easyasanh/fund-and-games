@@ -10,6 +10,7 @@ Fund and Games is a static investment idle clicker built for GitHub Pages. Start
 - Upgrade ownership milestones at 10, 25, 50, 100, and 250
 - Buy modes for 1x, next milestone, or maximum affordable purchases
 - Local save persistence with `localStorage`
+- Export/import save codes for moving progress between browsers
 - Offline progress for up to 8 hours
 - Prestige loop via Close the Fund
 - No build step required

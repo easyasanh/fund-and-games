@@ -426,9 +426,35 @@ h2 {
   background: var(--ink);
 }
 
+.button--light {
+  width: 100%;
+  color: var(--ink);
+  background: var(--panel-strong);
+  border: 1px solid var(--line);
+}
+
 .button:disabled {
   cursor: not-allowed;
   opacity: 0.48;
+}
+
+.save-code {
+  width: 100%;
+  min-height: 116px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  color: var(--ink);
+  background: var(--panel-strong);
+  font: 0.78rem ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.save-transfer-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 .tabs {
@@ -704,7 +730,8 @@ h2 {
   .hero-stats,
   .side-stack,
   .score-grid,
-  .effect-block {
+  .effect-block,
+  .save-transfer-actions {
     grid-template-columns: 1fr;
   }
 

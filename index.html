@@ -37,6 +37,13 @@
               <path d="M8 3v6h8V3M8 18h8" />
             </svg>
           </button>
+          <button id="export-button" class="icon-button" type="button" title="Export save" aria-label="Export save">
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M12 3v12" />
+              <path d="M7 10l5 5 5-5" />
+              <path d="M5 21h14" />
+            </svg>
+          </button>
           <button id="reset-button" class="icon-button" type="button" title="Reset save" aria-label="Reset save">
             <svg aria-hidden="true" viewBox="0 0 24 24">
               <path d="M6 8a7 7 0 1 1 1 9" />
@@ -136,6 +143,26 @@
               <strong id="legacy-value">0.00x</strong>
             </div>
             <button id="prestige-button" class="button button--dark" type="button" disabled>Close Fund</button>
+          </section>
+
+          <section class="panel compact-panel">
+            <div class="panel__header">
+              <div>
+                <p class="section-label">Save transfer</p>
+                <h2>Export / Import</h2>
+              </div>
+            </div>
+            <textarea
+              id="save-code"
+              class="save-code"
+              rows="5"
+              spellcheck="false"
+              placeholder="Generate or paste a save code"
+            ></textarea>
+            <div class="save-transfer-actions">
+              <button id="copy-save-button" class="button button--dark" type="button">Copy Save</button>
+              <button id="import-save-button" class="button button--light" type="button">Import</button>
+            </div>
           </section>
         </aside>
 

@@ -1,4 +1,5 @@
 const STORAGE_KEY = "fund-and-games-save-v1";
+const EXPORT_PREFIX = "FUNDGAMES1:";
 const SAVE_INTERVAL_MS = 5000;
 const upgradeMilestones = [
   { count: 10, bonus: 0.5, label: "+50% output" },
@@ -190,6 +191,10 @@ const elements = {
   researchButton: document.querySelector("#research-button"),
   researchSubtitle: document.querySelector("#research-button-subtitle"),
   saveButton: document.querySelector("#save-button"),
+  exportButton: document.querySelector("#export-button"),
+  copySaveButton: document.querySelector("#copy-save-button"),
+  importSaveButton: document.querySelector("#import-save-button"),
+  saveCode: document.querySelector("#save-code"),
   resetButton: document.querySelector("#reset-button"),
   toast: document.querySelector("#toast"),
   chartLine: document.querySelector("#chart-line"),
@@ -223,6 +228,25 @@ elements.researchButton.addEventListener("click", () => {
 elements.saveButton.addEventListener("click", () => {
   saveState();
   showToast("Game saved.");
+});
+
+elements.exportButton.addEventListener("click", () => {
+  writeExportCode();
+});
+
+elements.copySaveButton.addEventListener("click", async () => {
+  const code = writeExportCode();
+  try {
+    await navigator.clipboard.writeText(code);
+    showToast("Save code copied.");
+  } catch {
+    elements.saveCode.select();
+    showToast("Save code generated. Select and copy it.");
+  }
+});
+
+elements.importSaveButton.addEventListener("click", () => {
+  importSaveCode(elements.saveCode.value);
 });
 
 elements.resetButton.addEventListener("click", () => {
@@ -290,6 +314,90 @@ function loadState() {
     };
   } catch {
     return structuredClone(defaultState);
+  }
+}
+
+function normalizeImportedState(importedState) {
+  const normalized = {
+    ...structuredClone(defaultState),
+    ...importedState,
+    owned: { ...defaultState.owned, ...(importedState.owned ?? {}) }
+  };
+
+  normalized.capital = getSafeNumber(normalized.capital, 0);
+  normalized.lifetimeCapital = Math.max(getSafeNumber(normalized.lifetimeCapital, 0), normalized.capital);
+  normalized.legacy = Math.max(0, getSafeNumber(normalized.legacy, 0));
+  normalized.lastSavedAt = getSafeNumber(normalized.lastSavedAt, Date.now());
+  normalized.selectedCategory = ["research", "people", "strategy"].includes(normalized.selectedCategory)
+    ? normalized.selectedCategory
+    : "research";
+  normalized.buyMode = ["one", "milestone", "max"].includes(normalized.buyMode) ? normalized.buyMode : "one";
+  normalized.owned = Object.fromEntries(
+    upgrades.map((upgrade) => {
+      const owned = Math.max(0, Math.floor(getSafeNumber(normalized.owned[upgrade.id], 0)));
+      return [upgrade.id, owned];
+    })
+  );
+
+  return normalized;
+}
+
+function getSafeNumber(value, fallback) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function getSerializableState() {
+  return {
+    capital: state.capital,
+    lifetimeCapital: state.lifetimeCapital,
+    legacy: state.legacy,
+    selectedCategory: state.selectedCategory,
+    buyMode: state.buyMode,
+    owned: state.owned,
+    lastSavedAt: Date.now()
+  };
+}
+
+function encodeSaveState(saveState) {
+  const json = JSON.stringify({ version: 1, state: saveState });
+  return `${EXPORT_PREFIX}${btoa(json)}`;
+}
+
+function decodeSaveState(code) {
+  const trimmedCode = code.trim();
+  const payload = trimmedCode.startsWith(EXPORT_PREFIX)
+    ? trimmedCode.slice(EXPORT_PREFIX.length)
+    : trimmedCode;
+  const json = atob(payload);
+  const parsed = JSON.parse(json);
+
+  if (parsed.version !== 1 || !parsed.state) {
+    throw new Error("Unsupported save format");
+  }
+
+  return normalizeImportedState(parsed.state);
+}
+
+function writeExportCode() {
+  saveState();
+  const code = encodeSaveState(getSerializableState());
+  elements.saveCode.value = code;
+  showToast("Save code generated.");
+  return code;
+}
+
+function importSaveCode(code) {
+  try {
+    const importedState = decodeSaveState(code);
+    state = importedState;
+    state.lastSavedAt = Date.now();
+    lastTick = Date.now();
+    saveState();
+    render();
+    showToast("Save code imported.");
+  } catch {
+    showToast("That save code could not be imported.");
   }
 }
 
