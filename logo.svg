@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">Fund and Games logo</title>
+  <rect width="128" height="128" rx="16" fill="#101215"/>
+  <rect x="18" y="24" width="92" height="72" rx="8" fill="#f4f1e8"/>
+  <path d="M28 80h72" stroke="#171a1f" stroke-width="8" stroke-linecap="round"/>
+  <path d="M34 70l17-18 14 10 25-31" fill="none" stroke="#1f9d61" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="91" cy="31" r="8" fill="#c8932f"/>
+  <path d="M31 106h66" stroke="#35c37d" stroke-width="8" stroke-linecap="round"/>
+</svg>

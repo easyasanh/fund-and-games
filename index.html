@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fund and Games</title>
+    <meta
+      name="description"
+      content="A GitHub Pages-ready investment idle clicker about compounding capital, hiring analysts, and building a market-moving fund."
+    />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=20260422-1" />
+    <link rel="stylesheet" href="./styles.css?v=20260422-1" />
+  </head>
+  <body>
+    <div class="market-tape" aria-hidden="true">
+      <div class="market-tape__track">
+        <span>SPY +0.8%</span><span>VIX -2.1%</span><span>AUM +12.4%</span><span>ALPHA +3.2</span>
+        <span>IPO WINDOW OPEN</span><span>CREDIT TIGHTER</span><span>DATA EDGE +7%</span>
+        <span>SPY +0.8%</span><span>VIX -2.1%</span><span>AUM +12.4%</span><span>ALPHA +3.2</span>
+        <span>IPO WINDOW OPEN</span><span>CREDIT TIGHTER</span><span>DATA EDGE +7%</span>
+      </div>
+    </div>
+
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <img src="./logo.svg?v=20260422-1" alt="" class="brand__mark" />
+          <div>
+            <p class="brand__eyebrow">Investment idle clicker</p>
+            <h1>Fund and Games</h1>
+          </div>
+        </div>
+        <div class="topbar__actions">
+          <button id="save-button" class="icon-button" type="button" title="Save game" aria-label="Save game">
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M5 3h12l2 2v16H5z" />
+              <path d="M8 3v6h8V3M8 18h8" />
+            </svg>
+          </button>
+          <button id="reset-button" class="icon-button" type="button" title="Reset save" aria-label="Reset save">
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M6 8a7 7 0 1 1 1 9" />
+              <path d="M6 4v4h4" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <main class="game-grid">
+        <section class="terminal-panel">
+          <div class="terminal-panel__header">
+            <div>
+              <p class="section-label">Current mandate</p>
+              <h2 id="stage-name">Retail Account</h2>
+            </div>
+            <span id="stage-progress-label" class="stage-chip">Layer 1 / 10</span>
+          </div>
+
+          <div class="screen">
+            <div class="screen__grid" aria-hidden="true"></div>
+            <svg id="market-chart" class="market-chart" viewBox="0 0 620 260" role="img" aria-label="Animated portfolio performance chart">
+              <defs>
+                <linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#35c37d" stop-opacity="0.32" />
+                  <stop offset="100%" stop-color="#35c37d" stop-opacity="0.02" />
+                </linearGradient>
+              </defs>
+              <path id="chart-area" class="chart-area" d="" />
+              <path id="chart-line" class="chart-line" d="" />
+              <g id="chart-dots"></g>
+            </svg>
+            <div class="screen__readout">
+              <span>Terminal</span>
+              <strong id="terminal-status">Researching mispriced opportunities</strong>
+            </div>
+          </div>
+
+          <div class="hero-stats">
+            <div class="metric metric--primary">
+              <span>Capital</span>
+              <strong id="capital-value">$0</strong>
+            </div>
+            <div class="metric">
+              <span>Returns / sec</span>
+              <strong id="income-value">$0</strong>
+            </div>
+            <div class="metric">
+              <span>Research / click</span>
+              <strong id="click-value">$0</strong>
+            </div>
+          </div>
+
+          <button id="research-button" class="research-button" type="button">
+            <span>Research Trade</span>
+            <small id="research-button-subtitle">Turn attention into capital</small>
+          </button>
+        </section>
+
+        <aside class="side-stack">
+          <section class="panel compact-panel">
+            <div class="panel__header">
+              <div>
+                <p class="section-label">Fund health</p>
+                <h2>Scoreboard</h2>
+              </div>
+            </div>
+            <div class="score-grid">
+              <div><span>AUM</span><strong id="aum-value">$0</strong></div>
+              <div><span>Reputation</span><strong id="reputation-value">0</strong></div>
+              <div><span>Data</span><strong id="data-value">0</strong></div>
+              <div><span>Risk</span><strong id="risk-value">0%</strong></div>
+            </div>
+            <div class="progress-block">
+              <div class="progress-block__label">
+                <span id="next-stage-copy">Raise capital to reach Investment Club</span>
+                <strong id="stage-progress-percent">0%</strong>
+              </div>
+              <div class="progress-track">
+                <div id="stage-progress-bar" class="progress-fill"></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel compact-panel">
+            <div class="panel__header">
+              <div>
+                <p class="section-label">Track record</p>
+                <h2>Close the Fund</h2>
+              </div>
+            </div>
+            <p class="muted">
+              Lock in a track record, reset capital, and begin again with a permanent return multiplier.
+            </p>
+            <div class="legacy-box">
+              <span>Track Record</span>
+              <strong id="legacy-value">0.00x</strong>
+            </div>
+            <button id="prestige-button" class="button button--dark" type="button" disabled>Close Fund</button>
+          </section>
+        </aside>
+
+        <section class="panel upgrades-panel">
+          <div class="panel__header">
+            <div>
+              <p class="section-label">Buy side</p>
+              <h2>Upgrades</h2>
+            </div>
+            <div class="upgrade-controls">
+              <div class="tabs" role="tablist" aria-label="Upgrade categories">
+                <button class="tab is-active" type="button" data-category="research">Research</button>
+                <button class="tab" type="button" data-category="people">People</button>
+                <button class="tab" type="button" data-category="strategy">Strategy</button>
+              </div>
+              <div class="buy-modes" role="group" aria-label="Buy amount">
+                <button class="buy-mode is-active" type="button" data-buy-mode="one">1x</button>
+                <button class="buy-mode" type="button" data-buy-mode="milestone">Next</button>
+                <button class="buy-mode" type="button" data-buy-mode="max">Max</button>
+              </div>
+            </div>
+          </div>
+          <div id="upgrade-list" class="upgrade-list"></div>
+        </section>
+
+        <section class="panel milestones-panel">
+          <div class="panel__header">
+            <div>
+              <p class="section-label">Progression</p>
+              <h2>Mandates</h2>
+            </div>
+          </div>
+          <div id="stage-list" class="stage-list"></div>
+        </section>
+      </main>
+
+      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    </div>
+
+    <script src="./app.js?v=20260422-1"></script>
+  </body>
+</html>
