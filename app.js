@@ -719,9 +719,9 @@ function renderUpgrades() {
         purchase.complete
           ? "Milestones complete"
           : purchase.mode === "milestone"
-          ? `Buy to ${purchase.targetOwned} $${formatNumber(purchase.totalCost)}`
+          ? `Buy ${purchase.targetOwned - owned} to ${purchase.targetOwned} - $${formatNumber(purchase.totalCost)}`
           : purchase.quantity > 1
-            ? `Buy ${purchase.quantity} $${formatNumber(purchase.totalCost)}`
+            ? `Buy ${purchase.quantity} - $${formatNumber(purchase.totalCost)}`
             : `Buy $${formatNumber(purchase.totalCost)}`;
       return `
         <article class="upgrade-card">
