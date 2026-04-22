@@ -467,46 +467,35 @@ h2 {
 .tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.36);
 }
 
 .upgrade-controls {
-  display: grid;
-  gap: 10px;
-  justify-items: end;
-}
-
-.buy-modes {
   display: flex;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 3px;
-  background: rgba(255, 255, 255, 0.34);
+  justify-content: flex-end;
 }
 
 .tab,
-.buy-mode {
-  min-height: 38px;
-  padding: 0 13px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.38);
+.buy-mode-toggle {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
   cursor: pointer;
   color: var(--muted);
   font-weight: 900;
 }
 
-.buy-mode {
-  min-height: 32px;
-  border-color: transparent;
-  background: transparent;
-}
-
 .tab.is-active,
-.buy-mode.is-active {
+.buy-mode-toggle {
   color: #fff;
   background: var(--ink);
-  border-color: var(--ink);
 }
 
 .upgrade-list {
@@ -900,16 +889,16 @@ h2 {
     font-size: 0.7rem;
   }
 
-  .tabs,
-  .buy-modes {
-    gap: 5px;
+  .tabs {
+    width: 100%;
   }
 
   .tab,
-  .buy-mode {
-    min-height: 31px;
-    padding: 0 9px;
-    font-size: 0.76rem;
+  .buy-mode-toggle {
+    flex: 1 1 auto;
+    min-height: 30px;
+    padding: 0 6px;
+    font-size: 0.7rem;
   }
 
   .upgrade-list {

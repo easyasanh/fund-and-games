@@ -170,6 +170,12 @@ let state = loadState();
 let lastTick = Date.now();
 let chartPoints = [130, 128, 122, 126, 118, 110, 103, 96, 88, 79];
 let toastTimer;
+const buyModeCycle = ["one", "milestone", "max"];
+const buyModeLabels = {
+  one: "1x",
+  milestone: "Next",
+  max: "Max"
+};
 
 const elements = {
   capital: document.querySelector("#capital-value"),
@@ -196,6 +202,7 @@ const elements = {
   importSaveButton: document.querySelector("#import-save-button"),
   saveCode: document.querySelector("#save-code"),
   resetButton: document.querySelector("#reset-button"),
+  buyModeToggle: document.querySelector("#buy-mode-toggle"),
   toast: document.querySelector("#toast"),
   chartLine: document.querySelector("#chart-line"),
   chartArea: document.querySelector("#chart-area"),
@@ -210,11 +217,11 @@ document.querySelectorAll(".tab").forEach((tab) => {
   });
 });
 
-document.querySelectorAll(".buy-mode").forEach((button) => {
-  button.addEventListener("click", () => {
-    state.buyMode = button.dataset.buyMode;
-    render();
-  });
+elements.buyModeToggle.addEventListener("click", () => {
+  const currentIndex = buyModeCycle.indexOf(state.buyMode);
+  const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % buyModeCycle.length;
+  state.buyMode = buyModeCycle[nextIndex];
+  render();
 });
 
 elements.researchButton.addEventListener("click", () => {
@@ -689,9 +696,7 @@ function renderTabs() {
   document.querySelectorAll(".tab").forEach((tab) => {
     tab.classList.toggle("is-active", tab.dataset.category === state.selectedCategory);
   });
-  document.querySelectorAll(".buy-mode").forEach((button) => {
-    button.classList.toggle("is-active", button.dataset.buyMode === state.buyMode);
-  });
+  elements.buyModeToggle.textContent = `Mode: ${buyModeLabels[state.buyMode] ?? "1x"}`;
 }
 
 function renderUpgrades() {
