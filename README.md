@@ -13,6 +13,7 @@ Fund and Games is a static investment idle clicker built for GitHub Pages. Start
 - Export/import save codes for moving progress between browsers
 - Offline progress for up to 8 hours
 - Prestige loop via Close the Fund
+- Native iOS wrapper project in `ios/`
 - No build step required
 
 ## Local usage
@@ -30,3 +31,7 @@ Then visit `http://localhost:8080`.
 1. Push this repository to GitHub.
 2. In the repository settings, enable GitHub Pages.
 3. Set the source to the root of the `main` branch.
+
+## iOS app
+
+Open `ios/FundAndGames.xcodeproj` in Xcode to run the game as a native iOS app. The iOS target copies the root web files into the app bundle at build time and displays them in a `WKWebView`.
