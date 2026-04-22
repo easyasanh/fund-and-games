@@ -514,7 +514,7 @@ function getUpgradeEffectValue(upgrade, key, owned) {
   return milestoneValue;
 }
 
-function getUpgradeEffects(upgrade, owned) {
+function getUpgradeEffects(upgrade, owned, targetOwned = owned + 1) {
   const effectTypes = [
     { key: "click", label: "Research / click", prefix: "$" },
     { key: "income", label: "Returns / sec", prefix: "$" },
@@ -527,7 +527,7 @@ function getUpgradeEffects(upgrade, owned) {
     .filter((effect) => upgrade[effect.key])
     .map((effect) => {
       const current = getUpgradeEffectValue(upgrade, effect.key, owned);
-      const next = getUpgradeEffectValue(upgrade, effect.key, owned + 1) - current;
+      const next = getUpgradeEffectValue(upgrade, effect.key, Math.max(owned, targetOwned)) - current;
       return {
         ...effect,
         current,
@@ -709,7 +709,7 @@ function renderUpgrades() {
       const multiplier = getUpgradeMilestoneMultiplier(owned);
       const milestoneProgress = nextMilestone ? Math.min(100, (owned / nextMilestone.count) * 100) : 100;
       const canBuy = purchase.quantity > 0;
-      const effects = getUpgradeEffects(upgrade, owned);
+      const effects = getUpgradeEffects(upgrade, owned, purchase.targetOwned);
       const effectRows = effects
         .map((effect) => {
           return `
