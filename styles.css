@@ -543,33 +543,28 @@ h2 {
   line-height: 1.4;
 }
 
-.effect-block {
+.effect-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.effect-block > div {
+  gap: 5px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.42);
   padding: 9px;
-}
-
-.effect-block strong {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 0.76rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.effect-list {
-  display: grid;
-  gap: 4px;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 800;
+}
+
+.effect-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  line-height: 1.25;
+}
+
+.effect-row__delta {
+  color: var(--green-strong);
+  white-space: nowrap;
 }
 
 .milestone-meter {
@@ -881,7 +876,6 @@ h2 {
 
   .side-stack,
   .score-grid,
-  .effect-block,
   .save-transfer-actions {
     grid-template-columns: 1fr;
   }
@@ -936,17 +930,10 @@ h2 {
     line-height: 1.32;
   }
 
-  .effect-block {
-    gap: 6px;
-  }
-
-  .effect-block > div {
-    padding: 7px;
-  }
-
   .effect-list {
-    font-size: 0.72rem;
     gap: 3px;
+    padding: 7px;
+    font-size: 0.72rem;
   }
 
   .buy-button,

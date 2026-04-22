@@ -705,11 +705,15 @@ function renderUpgrades() {
       const milestoneProgress = nextMilestone ? Math.min(100, (owned / nextMilestone.count) * 100) : 100;
       const canBuy = purchase.quantity > 0;
       const effects = getUpgradeEffects(upgrade, owned);
-      const currentEffects = effects
-        .map((effect) => `<span>${effect.label}: ${formatSignedEffect(effect.current, effect)}</span>`)
-        .join("");
-      const nextEffects = effects
-        .map((effect) => `<span>${effect.label}: ${formatSignedEffect(effect.next, effect)}</span>`)
+      const effectRows = effects
+        .map((effect) => {
+          return `
+            <span class="effect-row">
+              <span>${effect.label}: ${formatSignedEffect(effect.current, effect)}</span>
+              <span class="effect-row__delta">(${formatSignedEffect(effect.next, effect)})</span>
+            </span>
+          `;
+        })
         .join("");
       const buyLabel =
         purchase.complete
@@ -728,16 +732,7 @@ function renderUpgrades() {
             </div>
             <span class="upgrade-card__owned">${owned}</span>
           </div>
-          <div class="effect-block">
-            <div>
-              <strong>Current</strong>
-              <div class="effect-list">${currentEffects}</div>
-            </div>
-            <div>
-              <strong>Next buy</strong>
-              <div class="effect-list">${nextEffects}</div>
-            </div>
-          </div>
+          <div class="effect-list">${effectRows}</div>
           <div class="milestone-meter">
             <div class="milestone-meter__label">
               <span>${nextMilestone ? `Next milestone: ${nextMilestone.count}` : "All listed milestones reached"}</span>
