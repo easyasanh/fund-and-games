@@ -9,7 +9,7 @@
       content="A GitHub Pages-ready investment idle clicker about compounding capital, hiring analysts, and building a market-moving fund."
     />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=20260422-1" />
-    <link rel="stylesheet" href="./styles.css?v=20260422-1" />
+    <link rel="stylesheet" href="./styles.css?v=20260422-2" />
   </head>
   <body>
     <div class="market-tape" aria-hidden="true">
@@ -142,6 +142,11 @@
               <span>Track Record</span>
               <strong id="legacy-value">0.00x</strong>
             </div>
+            <div class="legacy-box legacy-box--points">
+              <span>Prestige Points</span>
+              <strong id="prestige-points-value">0</strong>
+            </div>
+            <p class="prestige-gain">Close gain: <strong id="prestige-gain-value">+0</strong></p>
             <button id="prestige-button" class="button button--dark" type="button" disabled>Close Fund</button>
           </section>
 
@@ -193,11 +198,22 @@
           </div>
           <div id="stage-list" class="stage-list"></div>
         </section>
+
+        <section class="panel prestige-panel">
+          <div class="panel__header">
+            <div>
+              <p class="section-label">Prestige store</p>
+              <h2>Partner Perks</h2>
+            </div>
+            <span id="prestige-store-balance" class="prestige-balance">0 pts</span>
+          </div>
+          <div id="prestige-store" class="prestige-store"></div>
+        </section>
       </main>
 
       <div id="toast" class="toast" role="status" aria-live="polite"></div>
     </div>
 
-    <script src="./app.js?v=20260422-1"></script>
+    <script src="./app.js?v=20260422-2"></script>
   </body>
 </html>

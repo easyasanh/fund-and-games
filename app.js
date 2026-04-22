@@ -156,10 +156,55 @@ const upgrades = [
   }
 ];
 
+const prestigeStore = [
+  {
+    id: "seed",
+    name: "Seed Capital",
+    copy: "Begin each new fund with cash already committed.",
+    max: 8,
+    baseCost: 1,
+    growth: 1.65
+  },
+  {
+    id: "research",
+    name: "Research Network",
+    copy: "Permanent boost to research from every click.",
+    max: 10,
+    baseCost: 1,
+    growth: 1.7
+  },
+  {
+    id: "carry",
+    name: "Carry Structure",
+    copy: "Permanent boost to automatic returns.",
+    max: 10,
+    baseCost: 2,
+    growth: 1.75
+  },
+  {
+    id: "riskdesk",
+    name: "Risk Desk",
+    copy: "Permanent reduction to reported portfolio risk.",
+    max: 10,
+    baseCost: 2,
+    growth: 1.75
+  },
+  {
+    id: "partners",
+    name: "Partner Network",
+    copy: "Earn more prestige points when closing funds.",
+    max: 6,
+    baseCost: 3,
+    growth: 2
+  }
+];
+
 const defaultState = {
   capital: 0,
   lifetimeCapital: 0,
   legacy: 0,
+  prestigePoints: 0,
+  prestigeUpgrades: Object.fromEntries(prestigeStore.map((item) => [item.id, 0])),
   selectedCategory: "research",
   buyMode: "one",
   owned: Object.fromEntries(upgrades.map((upgrade) => [upgrade.id, 0])),
@@ -193,6 +238,10 @@ const elements = {
   upgradeList: document.querySelector("#upgrade-list"),
   stageList: document.querySelector("#stage-list"),
   legacy: document.querySelector("#legacy-value"),
+  prestigePoints: document.querySelector("#prestige-points-value"),
+  prestigeGain: document.querySelector("#prestige-gain-value"),
+  prestigeStore: document.querySelector("#prestige-store"),
+  prestigeStoreBalance: document.querySelector("#prestige-store-balance"),
   prestigeButton: document.querySelector("#prestige-button"),
   researchButton: document.querySelector("#research-button"),
   researchSubtitle: document.querySelector("#research-button-subtitle"),
@@ -274,14 +323,30 @@ elements.prestigeButton.addEventListener("click", () => {
   }
 
   const bonus = getPrestigeGain();
+  const points = getPrestigePointGain();
+  const prestigePoints = state.prestigePoints + points;
+  const prestigeUpgrades = { ...state.prestigeUpgrades };
   state = {
     ...structuredClone(defaultState),
     legacy: state.legacy + bonus,
+    prestigePoints,
+    prestigeUpgrades,
+    capital: getStartingCapital(prestigeUpgrades),
+    lifetimeCapital: getStartingCapital(prestigeUpgrades),
     lastSavedAt: Date.now()
   };
   saveState();
   render();
-  showToast(`Fund closed. Track Record increased by ${bonus.toFixed(2)}x.`);
+  showToast(`Fund closed. Track Record +${bonus.toFixed(2)}x. Prestige +${points}.`);
+});
+
+elements.prestigeStore.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-prestige-upgrade]");
+  if (!button) {
+    return;
+  }
+
+  buyPrestigeUpgrade(button.dataset.prestigeUpgrade);
 });
 
 window.addEventListener("beforeunload", saveState);
@@ -314,11 +379,12 @@ function loadState() {
       return structuredClone(defaultState);
     }
 
-    return {
+    return normalizeImportedState({
       ...structuredClone(defaultState),
       ...saved,
-      owned: { ...defaultState.owned, ...(saved.owned ?? {}) }
-    };
+      owned: { ...defaultState.owned, ...(saved.owned ?? {}) },
+      prestigeUpgrades: { ...defaultState.prestigeUpgrades, ...(saved.prestigeUpgrades ?? {}) }
+    });
   } catch {
     return structuredClone(defaultState);
   }
@@ -328,12 +394,14 @@ function normalizeImportedState(importedState) {
   const normalized = {
     ...structuredClone(defaultState),
     ...importedState,
-    owned: { ...defaultState.owned, ...(importedState.owned ?? {}) }
+    owned: { ...defaultState.owned, ...(importedState.owned ?? {}) },
+    prestigeUpgrades: { ...defaultState.prestigeUpgrades, ...(importedState.prestigeUpgrades ?? {}) }
   };
 
   normalized.capital = getSafeNumber(normalized.capital, 0);
   normalized.lifetimeCapital = Math.max(getSafeNumber(normalized.lifetimeCapital, 0), normalized.capital);
   normalized.legacy = Math.max(0, getSafeNumber(normalized.legacy, 0));
+  normalized.prestigePoints = Math.max(0, Math.floor(getSafeNumber(normalized.prestigePoints, 0)));
   normalized.lastSavedAt = getSafeNumber(normalized.lastSavedAt, Date.now());
   normalized.selectedCategory = ["research", "people", "strategy"].includes(normalized.selectedCategory)
     ? normalized.selectedCategory
@@ -343,6 +411,12 @@ function normalizeImportedState(importedState) {
     upgrades.map((upgrade) => {
       const owned = Math.max(0, Math.floor(getSafeNumber(normalized.owned[upgrade.id], 0)));
       return [upgrade.id, owned];
+    })
+  );
+  normalized.prestigeUpgrades = Object.fromEntries(
+    prestigeStore.map((upgrade) => {
+      const level = Math.max(0, Math.floor(getSafeNumber(normalized.prestigeUpgrades[upgrade.id], 0)));
+      return [upgrade.id, Math.min(upgrade.max, level)];
     })
   );
 
@@ -359,6 +433,8 @@ function getSerializableState() {
     capital: state.capital,
     lifetimeCapital: state.lifetimeCapital,
     legacy: state.legacy,
+    prestigePoints: state.prestigePoints,
+    prestigeUpgrades: state.prestigeUpgrades,
     selectedCategory: state.selectedCategory,
     buyMode: state.buyMode,
     owned: state.owned,
@@ -440,7 +516,7 @@ function getClickValue() {
     const owned = getOwned(upgrade.id);
     return sum + (upgrade.click ?? 0) * owned * getUpgradeMilestoneMultiplier(owned);
   }, 2);
-  return raw * getMultiplier();
+  return raw * getMultiplier() * getPrestigeResearchMultiplier();
 }
 
 function getIncomePerSecond() {
@@ -448,7 +524,7 @@ function getIncomePerSecond() {
     const owned = getOwned(upgrade.id);
     return sum + (upgrade.income ?? 0) * owned * getUpgradeMilestoneMultiplier(owned);
   }, 0);
-  return raw * getMultiplier();
+  return raw * getMultiplier() * getPrestigeCarryMultiplier();
 }
 
 function getReputation() {
@@ -470,7 +546,7 @@ function getRisk() {
     const owned = getOwned(upgrade.id);
     return sum + (upgrade.risk ?? 0) * owned * getUpgradeMilestoneMultiplier(owned);
   }, 0);
-  return Math.max(0, Math.min(98, risk * 10));
+  return Math.max(0, Math.min(98, risk * 10 * getPrestigeRiskMultiplier()));
 }
 
 function getOwned(upgradeId) {
@@ -489,6 +565,59 @@ function getUpgradeMilestoneMultiplier(owned) {
   return upgradeMilestones.reduce((multiplier, milestone) => {
     return owned >= milestone.count ? multiplier + milestone.bonus : multiplier;
   }, 1);
+}
+
+function getPrestigeLevel(upgradeId) {
+  return state.prestigeUpgrades?.[upgradeId] ?? 0;
+}
+
+function getPrestigeUpgradeCost(upgrade) {
+  return Math.ceil(upgrade.baseCost * upgrade.growth ** getPrestigeLevel(upgrade.id));
+}
+
+function getPrestigeResearchMultiplier() {
+  return 1 + getPrestigeLevel("research") * 0.12;
+}
+
+function getPrestigeCarryMultiplier() {
+  return 1 + getPrestigeLevel("carry") * 0.1;
+}
+
+function getPrestigeRiskMultiplier() {
+  return Math.max(0.45, 1 - getPrestigeLevel("riskdesk") * 0.06);
+}
+
+function getPrestigePointMultiplier() {
+  return 1 + getPrestigeLevel("partners") * 0.15;
+}
+
+function getStartingCapital(prestigeUpgrades = state.prestigeUpgrades) {
+  const level = prestigeUpgrades?.seed ?? 0;
+  return level === 0 ? 0 : Math.round(500 * level ** 2.15);
+}
+
+function getPrestigeEffectLabel(upgrade, level = getPrestigeLevel(upgrade.id)) {
+  if (upgrade.id === "seed") {
+    return `Start $${formatNumber(getStartingCapital({ ...state.prestigeUpgrades, seed: level }))}`;
+  }
+
+  if (upgrade.id === "research") {
+    return `Click x${(1 + level * 0.12).toFixed(2)}`;
+  }
+
+  if (upgrade.id === "carry") {
+    return `Returns x${(1 + level * 0.1).toFixed(2)}`;
+  }
+
+  if (upgrade.id === "riskdesk") {
+    return `Risk x${getPrestigeRiskMultiplierForLevel(level).toFixed(2)}`;
+  }
+
+  return `Points x${(1 + level * 0.15).toFixed(2)}`;
+}
+
+function getPrestigeRiskMultiplierForLevel(level) {
+  return Math.max(0.45, 1 - level * 0.06);
 }
 
 function getNextMilestone(owned) {
@@ -653,6 +782,32 @@ function getPrestigeGain() {
   return Math.max(0.15, Math.log10(state.lifetimeCapital / 1000000000) / 8);
 }
 
+function getPrestigePointGain() {
+  if (!canPrestige()) {
+    return 0;
+  }
+  return Math.max(1, Math.floor(getPrestigeGain() * 10 * getPrestigePointMultiplier()));
+}
+
+function buyPrestigeUpgrade(upgradeId) {
+  const upgrade = prestigeStore.find((item) => item.id === upgradeId);
+  if (!upgrade) {
+    return;
+  }
+
+  const level = getPrestigeLevel(upgrade.id);
+  const cost = getPrestigeUpgradeCost(upgrade);
+  if (level >= upgrade.max || state.prestigePoints < cost) {
+    return;
+  }
+
+  state.prestigePoints -= cost;
+  state.prestigeUpgrades[upgrade.id] = level + 1;
+  saveState();
+  render();
+  showToast(`${upgrade.name} upgraded to ${level + 1}.`);
+}
+
 function render() {
   const income = getIncomePerSecond();
   const click = getClickValue();
@@ -670,6 +825,9 @@ function render() {
   elements.stageName.textContent = stage.name;
   elements.stageProgressLabel.textContent = `Layer ${stageIndex + 1} / ${stages.length}`;
   elements.legacy.textContent = `${getMultiplier().toFixed(2)}x`;
+  elements.prestigePoints.textContent = formatNumber(state.prestigePoints);
+  elements.prestigeStoreBalance.textContent = `${formatNumber(state.prestigePoints)} pts`;
+  elements.prestigeGain.textContent = `+${getPrestigePointGain()}`;
   elements.prestigeButton.disabled = !canPrestige();
   elements.terminalStatus.textContent = stage.copy;
 
@@ -689,6 +847,7 @@ function render() {
   renderTabs();
   renderUpgrades();
   renderStages(stageIndex);
+  renderPrestigeStore();
   renderChart();
 }
 
@@ -773,6 +932,34 @@ function renderStages(currentStageIndex) {
             <p>${stage.copy}</p>
           </div>
           <strong>$${formatNumber(stage.threshold)}</strong>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+function renderPrestigeStore() {
+  elements.prestigeStore.innerHTML = prestigeStore
+    .map((upgrade) => {
+      const level = getPrestigeLevel(upgrade.id);
+      const cost = getPrestigeUpgradeCost(upgrade);
+      const complete = level >= upgrade.max;
+      const canBuy = !complete && state.prestigePoints >= cost;
+      const current = getPrestigeEffectLabel(upgrade, level);
+      const next = complete ? "Maxed" : getPrestigeEffectLabel(upgrade, level + 1);
+      return `
+        <article class="prestige-card">
+          <div>
+            <h3>${upgrade.name}</h3>
+            <p>${upgrade.copy}</p>
+          </div>
+          <div class="prestige-card__meta">
+            <span>${level}/${upgrade.max}</span>
+            <strong>${current} <span>${complete ? "" : `&rarr; ${next}`}</span></strong>
+          </div>
+          <button class="prestige-buy" type="button" data-prestige-upgrade="${upgrade.id}" ${canBuy ? "" : "disabled"}>
+            ${complete ? "Maxed" : `Spend ${cost}`}
+          </button>
         </article>
       `;
     })
