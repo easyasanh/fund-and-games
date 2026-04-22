@@ -490,7 +490,7 @@ function saveState() {
 }
 
 function applyOfflineProgress() {
-  const elapsedSeconds = Math.max(0, Math.min((Date.now() - state.lastSavedAt) / 1000, 60 * 60 * 8));
+  const elapsedSeconds = Math.max(0, (Date.now() - state.lastSavedAt) / 1000);
   const gain = getIncomePerSecond() * elapsedSeconds;
   if (gain > 0) {
     addCapital(gain);
