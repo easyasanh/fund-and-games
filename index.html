@@ -150,35 +150,6 @@
             <button id="prestige-button" class="button button--dark" type="button" disabled>Close Fund</button>
           </section>
 
-          <section class="panel compact-panel">
-            <div class="panel__header">
-              <div>
-                <p class="section-label">Save and dev</p>
-                <h2>Export / Import</h2>
-              </div>
-              <span class="speed-pill">Sim <strong id="dev-speed-label">1x</strong></span>
-            </div>
-            <textarea
-              id="save-code"
-              class="save-code"
-              rows="5"
-              spellcheck="false"
-              placeholder="Generate or paste a save code"
-            ></textarea>
-            <div class="save-transfer-actions">
-              <button id="copy-save-button" class="button button--dark" type="button">Copy Save</button>
-              <button id="import-save-button" class="button button--light" type="button">Import</button>
-            </div>
-            <div class="speed-panel">
-              <span>Speed</span>
-              <div id="dev-speed-buttons" class="speed-tabs" role="tablist" aria-label="Simulation speed">
-                <button class="speed-tab is-active" type="button" data-speed="1">1x</button>
-                <button class="speed-tab" type="button" data-speed="5">5x</button>
-                <button class="speed-tab" type="button" data-speed="20">20x</button>
-                <button class="speed-tab" type="button" data-speed="100">100x</button>
-              </div>
-            </div>
-          </section>
         </aside>
 
         <section class="panel upgrades-panel">
@@ -218,6 +189,36 @@
             <span id="prestige-store-balance" class="prestige-balance">0 pts</span>
           </div>
           <div id="prestige-store" class="prestige-store"></div>
+        </section>
+
+        <section class="panel save-panel">
+          <div class="panel__header">
+            <div>
+              <p class="section-label">Save and dev</p>
+              <h2>Export / Import</h2>
+            </div>
+            <span class="speed-pill">Sim <strong id="dev-speed-label">1x</strong></span>
+          </div>
+          <textarea
+            id="save-code"
+            class="save-code"
+            rows="5"
+            spellcheck="false"
+            placeholder="Generate or paste a save code"
+          ></textarea>
+          <div class="save-transfer-actions">
+            <button id="copy-save-button" class="button button--dark" type="button">Copy Save</button>
+            <button id="import-save-button" class="button button--light" type="button">Import</button>
+          </div>
+          <div class="speed-panel">
+            <span>Speed</span>
+            <div id="dev-speed-buttons" class="speed-tabs" role="tablist" aria-label="Simulation speed">
+              <button class="speed-tab is-active" type="button" data-speed="1">1x</button>
+              <button class="speed-tab" type="button" data-speed="5">5x</button>
+              <button class="speed-tab" type="button" data-speed="20">20x</button>
+              <button class="speed-tab" type="button" data-speed="100">100x</button>
+            </div>
+          </div>
         </section>
       </main>
 

@@ -165,7 +165,8 @@ button {
   grid-template-areas:
     "terminal side"
     "upgrades milestones"
-    "upgrades prestige";
+    "upgrades prestige"
+    "save save";
   gap: 18px;
   align-items: start;
 }
@@ -199,6 +200,10 @@ button {
 
 .prestige-panel {
   grid-area: prestige;
+}
+
+.save-panel {
+  grid-area: save;
 }
 
 .panel {
@@ -906,7 +911,8 @@ h2 {
       "upgrades"
       "side"
       "milestones"
-      "prestige";
+      "prestige"
+      "save";
   }
 
   .side-stack {
