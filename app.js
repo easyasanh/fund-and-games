@@ -206,6 +206,7 @@ const prestigeStore = [
 const defaultState = {
   capital: 0,
   lifetimeCapital: 0,
+  careerStage: 0,
   legacy: 0,
   prestigePoints: 0,
   prestigeUpgrades: Object.fromEntries(prestigeStore.map((item) => [item.id, 0])),
@@ -242,6 +243,8 @@ const elements = {
   nextStageCopy: document.querySelector("#next-stage-copy"),
   upgradeList: document.querySelector("#upgrade-list"),
   stageList: document.querySelector("#stage-list"),
+  closeFundTitle: document.querySelector("#close-fund-title"),
+  closeFundCopy: document.querySelector("#close-fund-copy"),
   legacy: document.querySelector("#legacy-value"),
   prestigePoints: document.querySelector("#prestige-points-value"),
   prestigeGain: document.querySelector("#prestige-gain-value"),
@@ -325,26 +328,35 @@ elements.resetButton.addEventListener("click", () => {
 });
 
 elements.prestigeButton.addEventListener("click", () => {
-  if (!canPrestige()) {
+  if (!canCloseFund()) {
     return;
   }
 
+  const careerStage = getCareerStageIndex();
+  const advancedStage = Math.min(stages.length - 1, careerStage + 1);
+  const advanced = advancedStage > careerStage;
   const bonus = getPrestigeGain();
   const points = getPrestigePointGain();
   const prestigePoints = state.prestigePoints + points;
   const prestigeUpgrades = { ...state.prestigeUpgrades };
   state = {
     ...structuredClone(defaultState),
+    careerStage: advanced ? advancedStage : careerStage,
     legacy: state.legacy + bonus,
     prestigePoints,
     prestigeUpgrades,
+    devSpeed: state.devSpeed,
     capital: getStartingCapital(prestigeUpgrades),
     lifetimeCapital: getStartingCapital(prestigeUpgrades),
     lastSavedAt: Date.now()
   };
   saveState();
   render();
-  showToast(`Fund closed. Track Record +${bonus.toFixed(2)}x. Prestige +${points}.`);
+  showToast(
+    advanced
+      ? `Fund closed. Advanced to ${stages[advancedStage].name}. Track Record +${bonus.toFixed(2)}x. Prestige +${points}.`
+      : `Fund closed. Track Record +${bonus.toFixed(2)}x. Prestige +${points}.`
+  );
 });
 
 elements.prestigeStore.addEventListener("click", (event) => {
@@ -424,6 +436,10 @@ function normalizeImportedState(importedState) {
 
   normalized.capital = getSafeNumber(normalized.capital, 0);
   normalized.lifetimeCapital = Math.max(getSafeNumber(normalized.lifetimeCapital, 0), normalized.capital);
+  normalized.careerStage = Math.min(
+    stages.length - 1,
+    Math.max(0, Math.floor(getSafeNumber(normalized.careerStage, inferCareerStageFromLifetimeCapital(normalized.lifetimeCapital))))
+  );
   normalized.legacy = Math.max(0, getSafeNumber(normalized.legacy, 0));
   normalized.prestigePoints = Math.max(0, Math.floor(getSafeNumber(normalized.prestigePoints, 0)));
   normalized.devSpeed = speedOptions.includes(getSafeNumber(normalized.devSpeed, 1))
@@ -459,6 +475,7 @@ function getSerializableState() {
   return {
     capital: state.capital,
     lifetimeCapital: state.lifetimeCapital,
+    careerStage: state.careerStage,
     legacy: state.legacy,
     prestigePoints: state.prestigePoints,
     prestigeUpgrades: state.prestigeUpgrades,
@@ -533,6 +550,25 @@ function addCapital(amount) {
 
   state.capital += amount;
   state.lifetimeCapital += amount;
+}
+
+function inferCareerStageFromLifetimeCapital(lifetimeCapital) {
+  let index = 0;
+  stages.forEach((stage, stageIndex) => {
+    if (lifetimeCapital >= stage.threshold) {
+      index = stageIndex;
+    }
+  });
+  return index;
+}
+
+function getCareerStageIndex() {
+  return Math.min(stages.length - 1, Math.max(0, state.careerStage ?? 0));
+}
+
+function getCareerStageGoal(stageIndex = getCareerStageIndex()) {
+  const nextStage = stages[stageIndex + 1];
+  return nextStage ? nextStage.threshold : stages[stageIndex].threshold;
 }
 
 function getMultiplier() {
@@ -785,32 +821,26 @@ function buyUpgrade(upgradeId) {
   }
 }
 
-function getCurrentStageIndex() {
-  let index = 0;
-  stages.forEach((stage, stageIndex) => {
-    if (state.lifetimeCapital >= stage.threshold) {
-      index = stageIndex;
-    }
-  });
-  return index;
-}
-
-function canPrestige() {
-  return state.lifetimeCapital >= stages.at(-1).threshold;
+function canCloseFund() {
+  return state.lifetimeCapital >= getCareerStageGoal();
 }
 
 function getPrestigeGain() {
-  if (!canPrestige()) {
+  if (!canCloseFund()) {
     return 0;
   }
-  return Math.max(0.15, Math.log10(state.lifetimeCapital / 1000000000) / 8);
+  const stageIndex = getCareerStageIndex();
+  const goal = getCareerStageGoal(stageIndex);
+  const overage = Math.max(1, state.lifetimeCapital / Math.max(1, goal));
+  return Math.max(0.15, 0.15 + stageIndex * 0.05 + Math.log10(overage) * 0.08);
 }
 
 function getPrestigePointGain() {
-  if (!canPrestige()) {
+  if (!canCloseFund()) {
     return 0;
   }
-  return Math.max(1, Math.floor(getPrestigeGain() * 10 * getPrestigePointMultiplier()));
+  const basePoints = 1 + Math.floor(getCareerStageIndex() / 2);
+  return Math.max(1, Math.floor(basePoints * getPrestigePointMultiplier()));
 }
 
 function buyPrestigeUpgrade(upgradeId) {
@@ -839,9 +869,11 @@ function buyPrestigeUpgrade(upgradeId) {
 function render() {
   const income = getIncomePerSecond();
   const click = getClickValue();
-  const stageIndex = getCurrentStageIndex();
+  const stageIndex = getCareerStageIndex();
   const stage = stages[stageIndex];
   const nextStage = stages[stageIndex + 1];
+  const goal = getCareerStageGoal(stageIndex);
+  const progress = Math.max(0, Math.min(1, state.lifetimeCapital / Math.max(1, goal)));
 
   elements.capital.textContent = `$${formatNumber(state.capital)}`;
   elements.income.textContent = `$${formatNumber(income)}`;
@@ -851,7 +883,7 @@ function render() {
   elements.data.textContent = formatNumber(getData());
   elements.risk.textContent = `${Math.round(getRisk())}%`;
   elements.stageName.textContent = stage.name;
-  elements.stageProgressLabel.textContent = `Layer ${stageIndex + 1} / ${stages.length}`;
+  elements.stageProgressLabel.textContent = `Stage ${stageIndex + 1} / ${stages.length}`;
   elements.legacy.textContent = `${getMultiplier().toFixed(2)}x`;
   elements.prestigePoints.textContent = formatNumber(state.prestigePoints);
   elements.prestigeStoreBalance.textContent = `${formatNumber(state.prestigePoints)} pts`;
@@ -860,20 +892,29 @@ function render() {
   elements.speedButtons.querySelectorAll("[data-speed]").forEach((button) => {
     button.classList.toggle("is-active", Number(button.dataset.speed) === state.devSpeed);
   });
-  elements.prestigeButton.disabled = !canPrestige();
+  elements.prestigeButton.disabled = !canCloseFund();
   elements.terminalStatus.textContent = stage.copy;
 
   if (nextStage) {
-    const previousThreshold = stage.threshold;
-    const range = nextStage.threshold - previousThreshold;
-    const progress = Math.max(0, Math.min(1, (state.lifetimeCapital - previousThreshold) / range));
-    elements.nextStageCopy.textContent = `Raise $${formatNumber(nextStage.threshold)} lifetime capital to reach ${nextStage.name}`;
+    elements.nextStageCopy.textContent = canCloseFund()
+      ? `Close fund to enter ${nextStage.name}`
+      : `Raise $${formatNumber(goal)} this run to unlock ${nextStage.name}`;
     elements.stageProgressPercent.textContent = `${Math.round(progress * 100)}%`;
     elements.stageProgressBar.style.width = `${progress * 100}%`;
+    elements.closeFundTitle.textContent = `Advance to ${nextStage.name}`;
+    elements.closeFundCopy.textContent =
+      "Finish the current mandate, bank your track record, and start the next stage with permanent bonuses.";
+    elements.prestigeButton.textContent = "Advance Stage";
   } else {
-    elements.nextStageCopy.textContent = "All mandates unlocked. Close the fund to build Track Record.";
-    elements.stageProgressPercent.textContent = "100%";
-    elements.stageProgressBar.style.width = "100%";
+    elements.nextStageCopy.textContent = canCloseFund()
+      ? "Final mandate cleared. Close the fund to run the endgame again with more Track Record."
+      : `Raise $${formatNumber(goal)} this run to complete the final mandate`;
+    elements.stageProgressPercent.textContent = `${Math.round(progress * 100)}%`;
+    elements.stageProgressBar.style.width = `${progress * 100}%`;
+    elements.closeFundTitle.textContent = "Close the Fund";
+    elements.closeFundCopy.textContent =
+      "This is the final mandate. Closing now restarts the same endgame stage with more permanent power.";
+    elements.prestigeButton.textContent = "Close Fund";
   }
 
   renderTabs();
