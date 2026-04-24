@@ -9,6 +9,8 @@ const upgradeMilestones = [
   { count: 250, bonus: 8, label: "+800% output" }
 ];
 
+const speedOptions = [1, 5, 20, 100];
+
 const stages = [
   { name: "Retail Account", threshold: 0, copy: "Spare cash, free charts, dangerous confidence." },
   { name: "Side Portfolio", threshold: 2500, copy: "A watchlist, a thesis, and fewer panic sells." },
@@ -161,6 +163,8 @@ const prestigeStore = [
     id: "seed",
     name: "Seed Capital",
     copy: "Begin each new fund with cash already committed.",
+    tier: 0,
+    requires: null,
     max: 8,
     baseCost: 1,
     growth: 1.65
@@ -169,6 +173,8 @@ const prestigeStore = [
     id: "research",
     name: "Research Network",
     copy: "Permanent boost to research from every click.",
+    tier: 1,
+    requires: "seed",
     max: 10,
     baseCost: 1,
     growth: 1.7
@@ -177,6 +183,8 @@ const prestigeStore = [
     id: "carry",
     name: "Carry Structure",
     copy: "Permanent boost to automatic returns.",
+    tier: 1,
+    requires: "seed",
     max: 10,
     baseCost: 2,
     growth: 1.75
@@ -185,6 +193,8 @@ const prestigeStore = [
     id: "riskdesk",
     name: "Risk Desk",
     copy: "Permanent reduction to reported portfolio risk.",
+    tier: 2,
+    requires: "carry",
     max: 10,
     baseCost: 2,
     growth: 1.75
@@ -193,6 +203,8 @@ const prestigeStore = [
     id: "partners",
     name: "Partner Network",
     copy: "Earn more prestige points when closing funds.",
+    tier: 2,
+    requires: "research",
     max: 6,
     baseCost: 3,
     growth: 2
@@ -205,6 +217,7 @@ const defaultState = {
   legacy: 0,
   prestigePoints: 0,
   prestigeUpgrades: Object.fromEntries(prestigeStore.map((item) => [item.id, 0])),
+  devSpeed: 1,
   selectedCategory: "research",
   buyMode: "one",
   owned: Object.fromEntries(upgrades.map((upgrade) => [upgrade.id, 0])),
@@ -242,6 +255,8 @@ const elements = {
   prestigeGain: document.querySelector("#prestige-gain-value"),
   prestigeStore: document.querySelector("#prestige-store"),
   prestigeStoreBalance: document.querySelector("#prestige-store-balance"),
+  speedButtons: document.querySelector("#dev-speed-buttons"),
+  speedLabel: document.querySelector("#dev-speed-label"),
   prestigeButton: document.querySelector("#prestige-button"),
   researchButton: document.querySelector("#research-button"),
   researchSubtitle: document.querySelector("#research-button-subtitle"),
@@ -349,6 +364,23 @@ elements.prestigeStore.addEventListener("click", (event) => {
   buyPrestigeUpgrade(button.dataset.prestigeUpgrade);
 });
 
+elements.speedButtons.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-speed]");
+  if (!button) {
+    return;
+  }
+
+  const speed = getSafeNumber(button.dataset.speed, 1);
+  if (!speedOptions.includes(speed)) {
+    return;
+  }
+
+  state.devSpeed = speed;
+  saveState();
+  render();
+  showToast(`Sim speed set to ${speed}x.`);
+});
+
 window.addEventListener("beforeunload", saveState);
 
 setInterval(() => {
@@ -361,7 +393,7 @@ setInterval(gameLoop, 250);
 
 function gameLoop() {
   const now = Date.now();
-  const elapsedSeconds = Math.min((now - lastTick) / 1000, 5);
+  const elapsedSeconds = Math.min((now - lastTick) / 1000, 5) * state.devSpeed;
   lastTick = now;
   addCapital(getIncomePerSecond() * elapsedSeconds);
 
@@ -402,6 +434,9 @@ function normalizeImportedState(importedState) {
   normalized.lifetimeCapital = Math.max(getSafeNumber(normalized.lifetimeCapital, 0), normalized.capital);
   normalized.legacy = Math.max(0, getSafeNumber(normalized.legacy, 0));
   normalized.prestigePoints = Math.max(0, Math.floor(getSafeNumber(normalized.prestigePoints, 0)));
+  normalized.devSpeed = speedOptions.includes(getSafeNumber(normalized.devSpeed, 1))
+    ? getSafeNumber(normalized.devSpeed, 1)
+    : 1;
   normalized.lastSavedAt = getSafeNumber(normalized.lastSavedAt, Date.now());
   normalized.selectedCategory = ["research", "people", "strategy"].includes(normalized.selectedCategory)
     ? normalized.selectedCategory
@@ -435,6 +470,7 @@ function getSerializableState() {
     legacy: state.legacy,
     prestigePoints: state.prestigePoints,
     prestigeUpgrades: state.prestigeUpgrades,
+    devSpeed: state.devSpeed,
     selectedCategory: state.selectedCategory,
     buyMode: state.buyMode,
     owned: state.owned,
@@ -490,7 +526,7 @@ function saveState() {
 }
 
 function applyOfflineProgress() {
-  const elapsedSeconds = Math.max(0, (Date.now() - state.lastSavedAt) / 1000);
+  const elapsedSeconds = Math.max(0, (Date.now() - state.lastSavedAt) / 1000) * state.devSpeed;
   const gain = getIncomePerSecond() * elapsedSeconds;
   if (gain > 0) {
     addCapital(gain);
@@ -573,6 +609,14 @@ function getPrestigeLevel(upgradeId) {
 
 function getPrestigeUpgradeCost(upgrade) {
   return Math.ceil(upgrade.baseCost * upgrade.growth ** getPrestigeLevel(upgrade.id));
+}
+
+function isPrestigeUnlocked(upgrade) {
+  if (!upgrade.requires) {
+    return true;
+  }
+
+  return getPrestigeLevel(upgrade.requires) > 0;
 }
 
 function getPrestigeResearchMultiplier() {
@@ -795,6 +839,10 @@ function buyPrestigeUpgrade(upgradeId) {
     return;
   }
 
+  if (!isPrestigeUnlocked(upgrade)) {
+    return;
+  }
+
   const level = getPrestigeLevel(upgrade.id);
   const cost = getPrestigeUpgradeCost(upgrade);
   if (level >= upgrade.max || state.prestigePoints < cost) {
@@ -828,6 +876,10 @@ function render() {
   elements.prestigePoints.textContent = formatNumber(state.prestigePoints);
   elements.prestigeStoreBalance.textContent = `${formatNumber(state.prestigePoints)} pts`;
   elements.prestigeGain.textContent = `+${getPrestigePointGain()}`;
+  elements.speedLabel.textContent = `${state.devSpeed}x`;
+  elements.speedButtons.querySelectorAll("[data-speed]").forEach((button) => {
+    button.classList.toggle("is-active", Number(button.dataset.speed) === state.devSpeed);
+  });
   elements.prestigeButton.disabled = !canPrestige();
   elements.terminalStatus.textContent = stage.copy;
 
@@ -939,16 +991,27 @@ function renderStages(currentStageIndex) {
 }
 
 function renderPrestigeStore() {
-  elements.prestigeStore.innerHTML = prestigeStore
-    .map((upgrade) => {
+  const tiers = [...new Set(prestigeStore.map((upgrade) => upgrade.tier))].sort((a, b) => a - b);
+  elements.prestigeStore.innerHTML = tiers
+    .map((tier) => {
+      const nodes = prestigeStore.filter((upgrade) => upgrade.tier === tier);
+      return `
+        <div class="prestige-tree__row" data-tier="${tier}">
+          ${nodes
+            .map((upgrade) => {
       const level = getPrestigeLevel(upgrade.id);
       const cost = getPrestigeUpgradeCost(upgrade);
       const complete = level >= upgrade.max;
-      const canBuy = !complete && state.prestigePoints >= cost;
+      const unlocked = isPrestigeUnlocked(upgrade);
+      const canBuy = unlocked && !complete && state.prestigePoints >= cost;
       const current = getPrestigeEffectLabel(upgrade, level);
       const next = complete ? "Maxed" : getPrestigeEffectLabel(upgrade, level + 1);
+      const requirement = upgrade.requires
+        ? prestigeStore.find((item) => item.id === upgrade.requires)?.name ?? "Prior node"
+        : "";
       return `
-        <article class="prestige-card">
+        <article class="prestige-card ${unlocked ? "" : "is-locked"} ${complete ? "is-maxed" : ""}">
+          <span class="prestige-card__branch" aria-hidden="true"></span>
           <div>
             <h3>${upgrade.name}</h3>
             <p>${upgrade.copy}</p>
@@ -957,10 +1020,15 @@ function renderPrestigeStore() {
             <span>${level}/${upgrade.max}</span>
             <strong>${current} <span>${complete ? "" : `&rarr; ${next}`}</span></strong>
           </div>
+          <div class="prestige-card__status">${unlocked ? (complete ? "Maxed" : `Cost ${cost} pts`) : `Unlock via ${requirement}`}</div>
           <button class="prestige-buy" type="button" data-prestige-upgrade="${upgrade.id}" ${canBuy ? "" : "disabled"}>
             ${complete ? "Maxed" : `Spend ${cost}`}
           </button>
         </article>
+      `;
+    })
+            .join("")}
+        </div>
       `;
     })
     .join("");

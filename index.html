@@ -9,7 +9,7 @@
       content="A GitHub Pages-ready investment idle clicker about compounding capital, hiring analysts, and building a market-moving fund."
     />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=20260422-1" />
-    <link rel="stylesheet" href="./styles.css?v=20260422-2" />
+    <link rel="stylesheet" href="./styles.css?v=20260424-1" />
   </head>
   <body>
     <div class="market-tape" aria-hidden="true">
@@ -153,9 +153,10 @@
           <section class="panel compact-panel">
             <div class="panel__header">
               <div>
-                <p class="section-label">Save transfer</p>
+                <p class="section-label">Save and dev</p>
                 <h2>Export / Import</h2>
               </div>
+              <span class="speed-pill">Sim <strong id="dev-speed-label">1x</strong></span>
             </div>
             <textarea
               id="save-code"
@@ -167,6 +168,15 @@
             <div class="save-transfer-actions">
               <button id="copy-save-button" class="button button--dark" type="button">Copy Save</button>
               <button id="import-save-button" class="button button--light" type="button">Import</button>
+            </div>
+            <div class="speed-panel">
+              <span>Speed</span>
+              <div id="dev-speed-buttons" class="speed-tabs" role="tablist" aria-label="Simulation speed">
+                <button class="speed-tab is-active" type="button" data-speed="1">1x</button>
+                <button class="speed-tab" type="button" data-speed="5">5x</button>
+                <button class="speed-tab" type="button" data-speed="20">20x</button>
+                <button class="speed-tab" type="button" data-speed="100">100x</button>
+              </div>
             </div>
           </section>
         </aside>
@@ -214,6 +224,6 @@
       <div id="toast" class="toast" role="status" aria-live="polite"></div>
     </div>
 
-    <script src="./app.js?v=20260422-2"></script>
+    <script src="./app.js?v=20260424-1"></script>
   </body>
 </html>
