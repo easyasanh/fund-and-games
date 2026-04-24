@@ -192,16 +192,6 @@ const prestigeStore = [
     growth: 1.75
   },
   {
-    id: "riskdesk",
-    name: "Risk Desk",
-    copy: "Permanent reduction to reported portfolio risk.",
-    tier: 2,
-    requires: "carry",
-    max: 10,
-    baseCost: 2,
-    growth: 1.75
-  },
-  {
     id: "partners",
     name: "Partner Network",
     copy: "Earn more prestige points when closing funds.",
@@ -584,7 +574,7 @@ function getRisk() {
     const owned = getOwned(upgrade.id);
     return sum + (upgrade.risk ?? 0) * owned * getUpgradeMilestoneMultiplier(owned);
   }, 0);
-  return Math.max(0, Math.min(98, risk * 10 * getPrestigeRiskMultiplier()));
+  return Math.max(0, Math.min(98, risk * 10));
 }
 
 function getOwned(upgradeId) {
@@ -629,10 +619,6 @@ function getPrestigeCarryMultiplier() {
   return 1 + getPrestigeLevel("carry") * 0.1;
 }
 
-function getPrestigeRiskMultiplier() {
-  return Math.max(0.45, 1 - getPrestigeLevel("riskdesk") * 0.06);
-}
-
 function getPrestigePointMultiplier() {
   return 1 + getPrestigeLevel("partners") * 0.15;
 }
@@ -655,15 +641,7 @@ function getPrestigeEffectLabel(upgrade, level = getPrestigeLevel(upgrade.id)) {
     return `Returns x${(1 + level * 0.1).toFixed(2)}`;
   }
 
-  if (upgrade.id === "riskdesk") {
-    return `Risk x${getPrestigeRiskMultiplierForLevel(level).toFixed(2)}`;
-  }
-
   return `Points x${(1 + level * 0.15).toFixed(2)}`;
-}
-
-function getPrestigeRiskMultiplierForLevel(level) {
-  return Math.max(0.45, 1 - level * 0.06);
 }
 
 function getNextMilestone(owned) {
