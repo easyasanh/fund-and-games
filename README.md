@@ -5,7 +5,7 @@ Fund and Games is a static investment idle clicker built for GitHub Pages. Start
 ## Features
 
 - Clicker loop with passive income upgrades
-- Twelve progression layers from Retail Account to Market Infrastructure Titan
+- Five ascension-based eras, each unlocking a new layer of play
 - Upgrade categories for research, people, and strategy
 - Upgrade ownership milestones at 10, 25, 50, 100, and 250
 - Buy modes for 1x, next milestone, or maximum affordable purchases

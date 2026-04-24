@@ -11,19 +11,47 @@ const upgradeMilestones = [
 
 const speedOptions = [1, 5, 20, 100];
 
-const stages = [
-  { name: "Retail Account", threshold: 0, copy: "Spare cash, free charts, dangerous confidence." },
-  { name: "Side Portfolio", threshold: 2500, copy: "A watchlist, a thesis, and fewer panic sells." },
-  { name: "Investment Club", threshold: 25000, copy: "Friends pool capital and pretend the pizza is due diligence." },
-  { name: "Micro Fund", threshold: 175000, copy: "Outside money arrives. So do spreadsheets with tabs named final_final." },
-  { name: "Boutique Fund", threshold: 1250000, copy: "A real office, real clients, and a printer that knows fear." },
-  { name: "Hedge Fund", threshold: 9000000, copy: "Prime brokers, leverage limits, and opinions on rates." },
-  { name: "Multi-Strategy Firm", threshold: 60000000, copy: "Equities, credit, macro, quant, and one desk nobody understands." },
-  { name: "Institutional Manager", threshold: 350000000, copy: "Pensions, endowments, consultants, committees." },
-  { name: "Private Markets Giant", threshold: 1800000000, copy: "Infrastructure, venture, real assets, locked-up capital." },
-  { name: "Capital Engine", threshold: 10000000000, copy: "Your allocation meetings affect weather patterns in the economy." },
-  { name: "Sovereign Allocator", threshold: 60000000000, copy: "Governments, reserve pools, and mandates so large they bend entire markets." },
-  { name: "Market Infrastructure Titan", threshold: 400000000000, copy: "You no longer just allocate capital. You shape the plumbing the whole system runs on." }
+const eras = [
+  {
+    name: "Retail Investor",
+    goal: 25000,
+    copy: "You are trading your own account. Research is everything and every click still feels personal.",
+    unlocks: "Era 2 unlocks People upgrades and the prestige tree.",
+    categories: ["research"],
+    buyModes: ["one"]
+  },
+  {
+    name: "Fund Manager",
+    goal: 1250000,
+    copy: "Outside capital arrives. You can now hire analysts and start shaping a real investment process.",
+    unlocks: "Era 3 unlocks Strategy upgrades and the Next buy mode.",
+    categories: ["research", "people"],
+    buyModes: ["one", "milestone"]
+  },
+  {
+    name: "Multi-Strategy Firm",
+    goal: 60000000,
+    copy: "The firm expands beyond one playbook. Strategy desks come online and scaling gets more operational.",
+    unlocks: "Era 4 makes Reputation and Data materially boost production, and unlocks Max buy mode.",
+    categories: ["research", "people", "strategy"],
+    buyModes: ["one", "milestone", "max"]
+  },
+  {
+    name: "Institutional Platform",
+    goal: 1800000000,
+    copy: "Relationships and information edge now matter as much as raw output. Institutional trust starts to compound.",
+    unlocks: "Era 5 unlocks the empire bonus, where your whole platform starts feeding on itself.",
+    categories: ["research", "people", "strategy"],
+    buyModes: ["one", "milestone", "max"]
+  },
+  {
+    name: "Capital Empire",
+    goal: 400000000000,
+    copy: "You are no longer building a fund. You are building infrastructure around capital itself.",
+    unlocks: "Final era: loop this endgame for more permanent power.",
+    categories: ["research", "people", "strategy"],
+    buyModes: ["one", "milestone", "max"]
+  }
 ];
 
 const upgrades = [
@@ -269,8 +297,15 @@ const elements = {
   terminalStatus: document.querySelector("#terminal-status")
 };
 
+const categoryButtons = Object.fromEntries(
+  Array.from(document.querySelectorAll(".tab")).map((button) => [button.dataset.category, button])
+);
+
 document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", () => {
+    if (!getCurrentEra().categories.includes(tab.dataset.category)) {
+      return;
+    }
     state.selectedCategory = tab.dataset.category;
     render();
   });
@@ -333,7 +368,7 @@ elements.prestigeButton.addEventListener("click", () => {
   }
 
   const careerStage = getCareerStageIndex();
-  const advancedStage = Math.min(stages.length - 1, careerStage + 1);
+  const advancedStage = Math.min(eras.length - 1, careerStage + 1);
   const advanced = advancedStage > careerStage;
   const bonus = getPrestigeGain();
   const points = getPrestigePointGain();
@@ -354,7 +389,7 @@ elements.prestigeButton.addEventListener("click", () => {
   render();
   showToast(
     advanced
-      ? `Fund closed. Advanced to ${stages[advancedStage].name}. Track Record +${bonus.toFixed(2)}x. Prestige +${points}.`
+      ? `Fund closed. Advanced to ${eras[advancedStage].name}. Track Record +${bonus.toFixed(2)}x. Prestige +${points}.`
       : `Fund closed. Track Record +${bonus.toFixed(2)}x. Prestige +${points}.`
   );
 });
@@ -437,7 +472,7 @@ function normalizeImportedState(importedState) {
   normalized.capital = getSafeNumber(normalized.capital, 0);
   normalized.lifetimeCapital = Math.max(getSafeNumber(normalized.lifetimeCapital, 0), normalized.capital);
   normalized.careerStage = Math.min(
-    stages.length - 1,
+    eras.length - 1,
     Math.max(0, Math.floor(getSafeNumber(normalized.careerStage, inferCareerStageFromLifetimeCapital(normalized.lifetimeCapital))))
   );
   normalized.legacy = Math.max(0, getSafeNumber(normalized.legacy, 0));
@@ -462,6 +497,13 @@ function normalizeImportedState(importedState) {
       return [upgrade.id, Math.min(upgrade.max, level)];
     })
   );
+  const unlockedCategories = getEraAtIndex(normalized.careerStage).categories;
+  if (!unlockedCategories.includes(normalized.selectedCategory)) {
+    normalized.selectedCategory = unlockedCategories[0];
+  }
+  if (!getEraAtIndex(normalized.careerStage).buyModes.includes(normalized.buyMode)) {
+    normalized.buyMode = getEraAtIndex(normalized.careerStage).buyModes[0];
+  }
 
   return normalized;
 }
@@ -554,21 +596,45 @@ function addCapital(amount) {
 
 function inferCareerStageFromLifetimeCapital(lifetimeCapital) {
   let index = 0;
-  stages.forEach((stage, stageIndex) => {
-    if (lifetimeCapital >= stage.threshold) {
-      index = stageIndex;
+  eras.forEach((era, eraIndex) => {
+    if (lifetimeCapital >= era.goal) {
+      index = eraIndex;
     }
   });
   return index;
 }
 
 function getCareerStageIndex() {
-  return Math.min(stages.length - 1, Math.max(0, state.careerStage ?? 0));
+  return Math.min(eras.length - 1, Math.max(0, state.careerStage ?? 0));
 }
 
 function getCareerStageGoal(stageIndex = getCareerStageIndex()) {
-  const nextStage = stages[stageIndex + 1];
-  return nextStage ? nextStage.threshold : stages[stageIndex].threshold;
+  return getEraAtIndex(stageIndex).goal;
+}
+
+function getEraAtIndex(index) {
+  return eras[Math.min(eras.length - 1, Math.max(0, index))];
+}
+
+function getCurrentEra() {
+  return getEraAtIndex(getCareerStageIndex());
+}
+
+function getInstitutionalMultiplier() {
+  if (getCareerStageIndex() < 3) {
+    return 1;
+  }
+
+  return 1 + getReputation() * 0.015 + getData() * 0.01;
+}
+
+function getEmpireMultiplier() {
+  if (getCareerStageIndex() < 4) {
+    return 1;
+  }
+
+  const totalOwned = upgrades.reduce((sum, upgrade) => sum + getOwned(upgrade.id), 0);
+  return 1 + Math.log10(Math.max(10, totalOwned + state.lifetimeCapital / 1000000)) * 0.18;
 }
 
 function getMultiplier() {
@@ -580,7 +646,7 @@ function getClickValue() {
     const owned = getOwned(upgrade.id);
     return sum + (upgrade.click ?? 0) * owned * getUpgradeMilestoneMultiplier(owned);
   }, 2);
-  return raw * getMultiplier() * getPrestigeResearchMultiplier();
+  return raw * getMultiplier() * getPrestigeResearchMultiplier() * getInstitutionalMultiplier() * getEmpireMultiplier();
 }
 
 function getIncomePerSecond() {
@@ -588,7 +654,7 @@ function getIncomePerSecond() {
     const owned = getOwned(upgrade.id);
     return sum + (upgrade.income ?? 0) * owned * getUpgradeMilestoneMultiplier(owned);
   }, 0);
-  return raw * getMultiplier() * getPrestigeCarryMultiplier();
+  return raw * getMultiplier() * getPrestigeCarryMultiplier() * getInstitutionalMultiplier() * getEmpireMultiplier();
 }
 
 function getReputation() {
@@ -843,6 +909,10 @@ function getPrestigePointGain() {
   return Math.max(1, Math.floor(basePoints * getPrestigePointMultiplier()));
 }
 
+function canAccessPrestigeTree() {
+  return getCareerStageIndex() >= 1 || state.prestigePoints > 0;
+}
+
 function buyPrestigeUpgrade(upgradeId) {
   const upgrade = prestigeStore.find((item) => item.id === upgradeId);
   if (!upgrade) {
@@ -867,11 +937,11 @@ function buyPrestigeUpgrade(upgradeId) {
 }
 
 function render() {
+  const era = getCurrentEra();
   const income = getIncomePerSecond();
   const click = getClickValue();
   const stageIndex = getCareerStageIndex();
-  const stage = stages[stageIndex];
-  const nextStage = stages[stageIndex + 1];
+  const nextStage = eras[stageIndex + 1];
   const goal = getCareerStageGoal(stageIndex);
   const progress = Math.max(0, Math.min(1, state.lifetimeCapital / Math.max(1, goal)));
 
@@ -882,38 +952,39 @@ function render() {
   elements.reputation.textContent = formatNumber(getReputation());
   elements.data.textContent = formatNumber(getData());
   elements.risk.textContent = `${Math.round(getRisk())}%`;
-  elements.stageName.textContent = stage.name;
-  elements.stageProgressLabel.textContent = `Stage ${stageIndex + 1} / ${stages.length}`;
+  elements.stageName.textContent = era.name;
+  elements.stageProgressLabel.textContent = `Era ${stageIndex + 1} / ${eras.length}`;
   elements.legacy.textContent = `${getMultiplier().toFixed(2)}x`;
   elements.prestigePoints.textContent = formatNumber(state.prestigePoints);
   elements.prestigeStoreBalance.textContent = `${formatNumber(state.prestigePoints)} pts`;
   elements.prestigeGain.textContent = `+${getPrestigePointGain()}`;
   elements.speedLabel.textContent = `${state.devSpeed}x`;
-  elements.speedButtons.querySelectorAll("[data-speed]").forEach((button) => {
+  Array.from(elements.speedButtons.querySelectorAll("[data-speed]")).forEach((button) => {
     button.classList.toggle("is-active", Number(button.dataset.speed) === state.devSpeed);
   });
   elements.prestigeButton.disabled = !canCloseFund();
-  elements.terminalStatus.textContent = stage.copy;
+  elements.terminalStatus.textContent = era.copy;
+  elements.prestigeStore.closest(".prestige-panel").hidden = !canAccessPrestigeTree();
 
   if (nextStage) {
     elements.nextStageCopy.textContent = canCloseFund()
       ? `Close fund to enter ${nextStage.name}`
-      : `Raise $${formatNumber(goal)} this run to unlock ${nextStage.name}`;
+      : `Raise $${formatNumber(goal)} this run. ${era.unlocks}`;
     elements.stageProgressPercent.textContent = `${Math.round(progress * 100)}%`;
     elements.stageProgressBar.style.width = `${progress * 100}%`;
     elements.closeFundTitle.textContent = `Advance to ${nextStage.name}`;
     elements.closeFundCopy.textContent =
-      "Finish the current mandate, bank your track record, and start the next stage with permanent bonuses.";
-    elements.prestigeButton.textContent = "Advance Stage";
+      `Finish ${era.name}, bank your track record, and start ${nextStage.name} with new systems unlocked.`;
+    elements.prestigeButton.textContent = `Enter ${nextStage.name}`;
   } else {
     elements.nextStageCopy.textContent = canCloseFund()
-      ? "Final mandate cleared. Close the fund to run the endgame again with more Track Record."
-      : `Raise $${formatNumber(goal)} this run to complete the final mandate`;
+      ? "Final era cleared. Close the fund to loop the endgame with more permanent power."
+      : `Raise $${formatNumber(goal)} this run to complete the final era`;
     elements.stageProgressPercent.textContent = `${Math.round(progress * 100)}%`;
     elements.stageProgressBar.style.width = `${progress * 100}%`;
     elements.closeFundTitle.textContent = "Close the Fund";
     elements.closeFundCopy.textContent =
-      "This is the final mandate. Closing now restarts the same endgame stage with more permanent power.";
+      "This is the final era. Closing now restarts the same endgame chapter with more permanent power.";
     elements.prestigeButton.textContent = "Close Fund";
   }
 
@@ -925,10 +996,22 @@ function render() {
 }
 
 function renderTabs() {
-  document.querySelectorAll(".tab").forEach((tab) => {
-    tab.classList.toggle("is-active", tab.dataset.category === state.selectedCategory);
+  const era = getCurrentEra();
+  if (!era.categories.includes(state.selectedCategory)) {
+    state.selectedCategory = era.categories[0];
+  }
+  if (!era.buyModes.includes(state.buyMode)) {
+    state.buyMode = era.buyModes[0];
+  }
+
+  Object.entries(categoryButtons).forEach(([category, button]) => {
+    const unlocked = era.categories.includes(category);
+    button.hidden = !unlocked;
+    button.classList.toggle("is-active", unlocked && category === state.selectedCategory);
   });
-  elements.buyModeToggle.textContent = buyModeLabels[state.buyMode] ?? "1x";
+
+  elements.buyModeToggle.hidden = era.buyModes.length < 2;
+  elements.buyModeToggle.textContent = buyModeLabels[state.buyMode] ?? era.buyModes[0] ?? "1x";
 }
 
 function renderUpgrades() {
@@ -993,7 +1076,7 @@ function renderUpgrades() {
 }
 
 function renderStages(currentStageIndex) {
-  elements.stageList.innerHTML = stages
+  elements.stageList.innerHTML = eras
     .map((stage, index) => {
       const unlocked = index <= currentStageIndex;
       const current = index === currentStageIndex;
@@ -1002,9 +1085,9 @@ function renderStages(currentStageIndex) {
           <span class="stage-row__number">${index + 1}</span>
           <div>
             <h3>${stage.name}</h3>
-            <p>${stage.copy}</p>
+            <p>${stage.unlocks}</p>
           </div>
-          <strong>$${formatNumber(stage.threshold)}</strong>
+          <strong>$${formatNumber(stage.goal)}</strong>
         </article>
       `;
     })
