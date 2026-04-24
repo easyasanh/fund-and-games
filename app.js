@@ -21,7 +21,9 @@ const stages = [
   { name: "Multi-Strategy Firm", threshold: 60000000, copy: "Equities, credit, macro, quant, and one desk nobody understands." },
   { name: "Institutional Manager", threshold: 350000000, copy: "Pensions, endowments, consultants, committees." },
   { name: "Private Markets Giant", threshold: 1800000000, copy: "Infrastructure, venture, real assets, locked-up capital." },
-  { name: "Capital Engine", threshold: 10000000000, copy: "Your allocation meetings affect weather patterns in the economy." }
+  { name: "Capital Engine", threshold: 10000000000, copy: "Your allocation meetings affect weather patterns in the economy." },
+  { name: "Sovereign Allocator", threshold: 60000000000, copy: "Governments, reserve pools, and mandates so large they bend entire markets." },
+  { name: "Market Infrastructure Titan", threshold: 400000000000, copy: "You no longer just allocate capital. You shape the plumbing the whole system runs on." }
 ];
 
 const upgrades = [
@@ -816,7 +818,7 @@ function getCurrentStageIndex() {
 }
 
 function canPrestige() {
-  return state.lifetimeCapital >= 10000000000;
+  return state.lifetimeCapital >= stages.at(-1).threshold;
 }
 
 function getPrestigeGain() {
